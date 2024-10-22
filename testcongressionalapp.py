@@ -210,6 +210,4 @@ with tabs[6]:
     st.subheader("Resources")
     st.write("Links to financial literacy resources and tools will be available here.")
 
-# Run the app
-if __name__ == "__main__":
-    st.run()
+
