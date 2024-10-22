@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime
 import plotly.express as px
+import requests  # Importing requests for API calls
 
 # Initialize the session state
 if 'transactions' not in st.session_state:
@@ -13,6 +14,26 @@ if 'debts' not in st.session_state:
     st.session_state['debts'] = []
 
 st.title("🌟 Personal Finance Manager 🌟")
+
+# Stock Market Tab
+st.subheader("Stock Market Price Tracker")
+api_key = "NXARU2L1OVTKZ8UU"  # Replace with your Alpha Vantage API key
+ticker_symbol = st.text_input("Enter Stock Ticker Symbol (e.g., AAPL for Apple)")
+
+if st.button("Get Stock Price"):
+    if ticker_symbol:
+        url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={ticker_symbol}&apikey={api_key}"
+        response = requests.get(url)
+        data = response.json()
+
+        if "Global Quote" in data:
+            stock_data = data["Global Quote"]
+            price = stock_data["05. price"]
+            st.success(f"The current price of {ticker_symbol} is ${price}.")
+        else:
+            st.error("Invalid ticker symbol or API error. Please check the symbol and try again.")
+    else:
+        st.error("Please enter a ticker symbol.")
 
 # Create tabs for different functionalities
 tabs = st.tabs(["Budget Planner", "Expenses Tracker", "Investment Planner", "Savings Goals", "Debt Tracker", "Reports", "Resources"])
@@ -169,37 +190,26 @@ with tabs[4]:
     if st.session_state["debts"]:
         df_debts = pd.DataFrame(st.session_state["debts"])
         st.dataframe(df_debts)
-
-        # Calculate debt payoff time
-        for debt in st.session_state['debts']:
-            months_to_payoff = debt['Total Amount'] / debt['Monthly Payment'] if debt['Monthly Payment'] > 0 else "N/A"
-            st.write(f"**Debt Name:** {debt['Name']} | **Months to Payoff:** {months_to_payoff:.1f} months")
     else:
         st.write("No debts yet.")
 
 # Reports Tab
 with tabs[5]:
-    st.subheader("Reports")
+    st.subheader("Financial Reports")
 
-    # Generate a report based on transactions
-    if st.session_state["transactions"]:
-        df_report = pd.DataFrame(st.session_state["transactions"])
-        income_report = df_report[df_report['Type'] == 'Income'].groupby('Category').sum()
-        expense_report = df_report[df_report['Type'] == 'Expense'].groupby('Category').sum()
-
-        # Visualize the reports
-        fig1 = px.bar(income_report, x=income_report.index, y='Amount', title='Income Report by Category')
-        fig2 = px.bar(expense_report, x=expense_report.index, y='Amount', title='Expense Report by Category')
-
-        st.plotly_chart(fig1)
-        st.plotly_chart(fig2)
-    else:
-        st.write("No transactions available for report generation.")
+    # Example report logic (can be expanded)
+    if st.session_state['transactions']:
+        total_income = sum([t['Amount'] for t in st.session_state['transactions'] if t['Type'] == "Income"])
+        total_expense = sum([t['Amount'] for t in st.session_state['transactions'] if t['Type'] == "Expense"])
+        st.write(f"**Total Income:** ${total_income:.2f}")
+        st.write(f"**Total Expenses:** ${total_expense:.2f}")
+        st.write(f"**Net Savings:** ${total_income - total_expense:.2f}")
 
 # Resources Tab
 with tabs[6]:
     st.subheader("Resources")
-    st.write("Here are some helpful resources:")
-    st.write("- [Budgeting Tips](https://www.example.com)")
-    st.write("- [Investment Strategies](https://www.example.com)")
-    st.write("- [Debt Management](https://www.example.com)")
+    st.write("Links to financial literacy resources and tools will be available here.")
+
+# Run the app
+if __name__ == "__main__":
+    st.run()
