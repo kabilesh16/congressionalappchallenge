@@ -210,4 +210,57 @@ with tabs[6]:
     st.subheader("Resources")
     st.write("Links to financial literacy resources and tools will be available here.")
 
+    # List of resources (YouTube videos or tutorials)
+    resources = {
+        "YouTube Videos": [
+            {
+                "title": "The Basics of Investing",
+                "url": "https://www.youtube.com/watch?v=3N5jBThA0fE",
+                "description": "A comprehensive introduction to investing in the stock market."
+            },
+            {
+                "title": "Understanding Credit Scores",
+                "url": "https://www.youtube.com/watch?v=yO1gQgMy8kE",
+                "description": "Learn how credit scores work and how to improve them."
+            },
+            {
+                "title": "Budgeting 101",
+                "url": "https://www.youtube.com/watch?v=EovBWe-RDuc",
+                "description": "Essential tips on how to create and stick to a budget."
+            },
+        ],
+        "Online Courses": [
+            {
+                "title": "Financial Literacy Course by Khan Academy",
+                "url": "https://www.khanacademy.org/college-careers-more/personal-finance",
+                "description": "A free course covering various aspects of personal finance."
+            },
+            {
+                "title": "Investing Basics by Coursera",
+                "url": "https://www.coursera.org/learn/investing-basics",
+                "description": "An introductory course to investing concepts."
+            }
+        ]
+    }
+
+    # Display resources
+    for category, items in resources.items():
+        st.markdown(f"#### {category}")
+        for item in items:
+            st.write(f"- [{item['title']}]({item['url']}) - {item['description']}")
+
+    # Add News API integration
+    news_api_key = "e1f0711db9a34f9fb14ee48b09907dd7"  # Your News API key
+    news_url = f"https://newsapi.org/v2/everything?q=finance&apiKey={news_api_key}"  # Fetching finance-related news
+    news_response = requests.get(news_url)
+    news_data = news_response.json()
+
+    if news_data["status"] == "ok":
+        st.markdown("### Latest Finance News Articles")
+        for article in news_data["articles"]:
+            st.subheader(article["title"])
+            st.write(article["description"])
+            st.write(f"[Read more]({article['url']})")
+    else:
+        st.error("Failed to fetch news articles.")
 
