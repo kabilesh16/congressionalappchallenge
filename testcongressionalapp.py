@@ -4,6 +4,14 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 import plotly.express as px
 import requests  # Importing requests for API calls
+import base64
+import smtplib
+import os
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 # Initialize the session state
 if 'transactions' not in st.session_state:
@@ -13,7 +21,7 @@ if 'savings_goals' not in st.session_state:
 if 'debts' not in st.session_state:
     st.session_state['debts'] = []
 
-st.title("🌟 Personal Finance Manager 🌟")
+st.title("💰 Budget Buddy 💰")
 
 # Stock Market Tab
 st.subheader("Stock Market Price Tracker")
@@ -194,13 +202,13 @@ with tabs[4]:
         st.write("No debts yet.")
 
 # Reports Tab
-# Reports Tab
-# Reports Tab
+
 with tabs[5]:
+
     st.subheader("Financial Reports")
 
     # Example report logic (can be expanded)
-    if st.session_state['transactions']:
+    if st.session_state.get('transactions'):
         total_income = sum([t['Amount'] for t in st.session_state['transactions'] if t['Type'] == "Income"])
         total_expense = sum([t['Amount'] for t in st.session_state['transactions'] if t['Type'] == "Expense"])
         st.write(f"**Total Income:** ${total_income:.2f}")
@@ -255,9 +263,60 @@ with tabs[5]:
             advice = "Review your spending habits in this category to identify areas for reduction." if change > 0 else "Excellent job on reducing your expenses!"
             st.write(f"In {month}, your expenses {direction} by **${abs(change):.2f}**. {advice}")
 
+        # Prepare the email body
+        report_body = f"**Total Income:** ${total_income:.2f}\n**Total Expenses:** ${total_expense:.2f}\n**Net Savings:** ${total_income - total_expense:.2f}\n\n"
+        report_body += "### Monthly Income Changes\n"
+        for month, change in income_changes.items():
+            direction = "increased" if change > 0 else "decreased"
+            report_body += f"In {month}, your income {direction} by **${abs(change):.2f}**.\n"
+
+        report_body += "### Monthly Expense Changes\n"
+        for month, change in expense_changes.items():
+            direction = "increased" if change > 0 else "decreased"
+            report_body += f"In {month}, your expenses {direction} by **${abs(change):.2f}**.\n"
+
     else:
         st.write("No transactions recorded yet.")
 
+    # Function to send email
+    def send_email(subject, body, recipient_email, sender_email, sender_password):
+        try:
+            # Set up the server
+            server = smtplib.SMTP('smtp.gmail.com', 587)
+            server.starttls()  # Enable security
+            server.login(sender_email, sender_password)  # Login to your email account
+
+            # Create the email
+            msg = MIMEMultipart()
+            msg['From'] = sender_email
+            msg['To'] = recipient_email
+            msg['Subject'] = subject
+            msg.attach(MIMEText(body, 'plain'))
+
+            # Send the email
+            server.send_message(msg)
+            server.quit()  # Close the server
+            return True
+        except Exception as e:
+            return str(e)  # Return the error message if any
+
+    # Email Sending Functionality
+    st.markdown("### Send Financial Report via Email")
+    sender_email = st.text_input("Your Email", value="prateekhanu2024@gmail.com")
+    sender_password = st.text_input("Your Email Password", type='password')
+    recipient_email = st.text_input("Recipient's Email", value="halliprateek@gmail.com")
+    subject = st.text_input("Email Subject", value="Financial Report")
+
+    if st.button("Send Email"):
+        # Check if all fields are filled and if report_body is defined and not empty
+        if sender_email and sender_password and recipient_email and subject and 'report_body' in locals() and report_body:
+            result = send_email(subject, report_body, recipient_email, sender_email, sender_password)
+            if result is True:
+                st.success("Email sent successfully!")
+            else:
+                st.error(f"Failed to send email: {result}")
+        else:
+            st.error("Please fill out all fields and ensure there is a report to send.")
 
 # Resources Tab
 with tabs[6]:
