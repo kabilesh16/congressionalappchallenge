@@ -1,9 +1,8 @@
-#change to test branching in git
-
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime
+import plotly.express as px
 
 # Initialize the session state
 if 'transactions' not in st.session_state:
@@ -143,6 +142,12 @@ with tabs[3]:
     if st.session_state["savings_goals"]:
         df_goals = pd.DataFrame(st.session_state["savings_goals"])
         st.dataframe(df_goals)
+
+        # Show progress bars
+        for goal in st.session_state['savings_goals']:
+            progress = (goal['Current Amount'] / goal['Target Amount']) * 100 if goal['Target Amount'] > 0 else 0
+            st.progress(progress)
+
     else:
         st.write("No savings goals yet.")
 
@@ -152,10 +157,10 @@ with tabs[4]:
 
     debt_name = st.text_input("Debt Name")
     debt_amount = st.number_input("Total Debt Amount", min_value=0.0, step=100.0, format="%.2f")
-    current_debt = st.number_input("Current Debt Amount", min_value=0.0, step=100.0, format="%.2f")
+    monthly_payment = st.number_input("Monthly Payment", min_value=0.0, step=50.0, format="%.2f")
 
     if st.button("Add Debt"):
-        new_debt = {"Name": debt_name, "Total Amount": debt_amount, "Current Amount": current_debt}
+        new_debt = {"Name": debt_name, "Total Amount": debt_amount, "Monthly Payment": monthly_payment}
         st.session_state["debts"].append(new_debt)
         st.success("Debt added!")
 
@@ -164,6 +169,11 @@ with tabs[4]:
     if st.session_state["debts"]:
         df_debts = pd.DataFrame(st.session_state["debts"])
         st.dataframe(df_debts)
+
+        # Calculate debt payoff time
+        for debt in st.session_state['debts']:
+            months_to_payoff = debt['Total Amount'] / debt['Monthly Payment'] if debt['Monthly Payment'] > 0 else "N/A"
+            st.write(f"**Debt Name:** {debt['Name']} | **Months to Payoff:** {months_to_payoff:.1f} months")
     else:
         st.write("No debts yet.")
 
@@ -171,24 +181,25 @@ with tabs[4]:
 with tabs[5]:
     st.subheader("Reports")
 
-    # Monthly Expense Report
-    st.write("### Monthly Expense Report")
+    # Generate a report based on transactions
     if st.session_state["transactions"]:
-        expense_df = pd.DataFrame(st.session_state["transactions"])
-        expense_summary = expense_df[expense_df['Type'] == 'Expense'].groupby('Category')['Amount'].sum().reset_index()
-        st.bar_chart(expense_summary.set_index('Category'))
+        df_report = pd.DataFrame(st.session_state["transactions"])
+        income_report = df_report[df_report['Type'] == 'Income'].groupby('Category').sum()
+        expense_report = df_report[df_report['Type'] == 'Expense'].groupby('Category').sum()
+
+        # Visualize the reports
+        fig1 = px.bar(income_report, x=income_report.index, y='Amount', title='Income Report by Category')
+        fig2 = px.bar(expense_report, x=expense_report.index, y='Amount', title='Expense Report by Category')
+
+        st.plotly_chart(fig1)
+        st.plotly_chart(fig2)
     else:
-        st.write("No expense data to report.")
+        st.write("No transactions available for report generation.")
 
 # Resources Tab
 with tabs[6]:
     st.subheader("Resources")
-    st.write("### Financial Literacy Resources")
-    st.markdown("""
-    - [National Endowment for Financial Education](https://www.nefe.org/)
-    - [Khan Academy: Personal Finance](https://www.khanacademy.org/college-careers-more/personal-finance)
-    - [Mint: Budgeting Tips](https://mint.intuit.com/)
-    """)
-
-# Footer
-st.write("Created by [Your Name]. All rights reserved.")
+    st.write("Here are some helpful resources:")
+    st.write("- [Budgeting Tips](https://www.example.com)")
+    st.write("- [Investment Strategies](https://www.example.com)")
+    st.write("- [Debt Management](https://www.example.com)")
