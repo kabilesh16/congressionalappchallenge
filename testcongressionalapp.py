@@ -194,6 +194,8 @@ with tabs[4]:
         st.write("No debts yet.")
 
 # Reports Tab
+# Reports Tab
+# Reports Tab
 with tabs[5]:
     st.subheader("Financial Reports")
 
@@ -204,6 +206,58 @@ with tabs[5]:
         st.write(f"**Total Income:** ${total_income:.2f}")
         st.write(f"**Total Expenses:** ${total_expense:.2f}")
         st.write(f"**Net Savings:** ${total_income - total_expense:.2f}")
+
+        # Monthly Analysis
+        monthly_income_data = {}
+        monthly_expense_data = {}
+
+        for transaction in st.session_state['transactions']:
+            month = transaction['Date'].strftime("%Y-%m")  # Group by month
+            if transaction['Type'] == "Income":
+                if month not in monthly_income_data:
+                    monthly_income_data[month] = 0
+                monthly_income_data[month] += transaction['Amount']
+            else:
+                if month not in monthly_expense_data:
+                    monthly_expense_data[month] = 0
+                monthly_expense_data[month] += transaction['Amount']
+
+        # Calculate changes and advice
+        income_changes = {}
+        expense_changes = {}
+
+        income_months = list(monthly_income_data.keys())
+        expense_months = list(monthly_expense_data.keys())
+
+        for i in range(1, len(income_months)):
+            current_month = income_months[i]
+            previous_month = income_months[i - 1]
+            change = monthly_income_data[current_month] - monthly_income_data[previous_month]
+            income_changes[current_month] = change
+
+        for i in range(1, len(expense_months)):
+            current_month = expense_months[i]
+            previous_month = expense_months[i - 1]
+            change = monthly_expense_data[current_month] - monthly_expense_data[previous_month]
+            expense_changes[current_month] = change
+
+        # Display Income Changes
+        st.markdown("### Monthly Income Changes")
+        for month, change in income_changes.items():
+            direction = "increased" if change > 0 else "decreased"
+            advice = "Consider increasing your income streams or reviewing salary expectations." if change < 0 else "Great job on increasing your income!"
+            st.write(f"In {month}, your income {direction} by **${abs(change):.2f}**. {advice}")
+
+        # Display Expense Changes
+        st.markdown("### Monthly Expense Changes")
+        for month, change in expense_changes.items():
+            direction = "increased" if change > 0 else "decreased"
+            advice = "Review your spending habits in this category to identify areas for reduction." if change > 0 else "Excellent job on reducing your expenses!"
+            st.write(f"In {month}, your expenses {direction} by **${abs(change):.2f}**. {advice}")
+
+    else:
+        st.write("No transactions recorded yet.")
+
 
 # Resources Tab
 with tabs[6]:
@@ -263,4 +317,3 @@ with tabs[6]:
             st.write(f"[Read more]({article['url']})")
     else:
         st.error("Failed to fetch news articles.")
-
