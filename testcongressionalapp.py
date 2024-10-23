@@ -44,6 +44,10 @@ if page == "Home":
             "Entertainment Budget": entertainment_budget,
             "Spending": {"Eating Out": 0.0, "Entertainment": 0.0},
         }
+        # Store income and fixed expenses in session state for use in Investment Planner
+        st.session_state['income'] = income
+        st.session_state['fixed_expenses'] = fixed_expenses
+        
         st.success(f"Monthly Overview for {month_year_key} saved!")
 
     # Expense Tracking Section
@@ -136,6 +140,10 @@ elif page == "Investment Planner":
     target_amount = st.number_input("Target Investment Amount", min_value=0.0, step=100.0, format="%.2f")
     initial_investment = st.number_input("Initial Investment Amount", min_value=0.0, step=100.0, format="%.2f")
     years_to_invest = st.number_input("Investment Duration (Years)", min_value=1, step=1)
+
+    # Get income and fixed expenses from session state
+    income = st.session_state.get('income', 0.0)
+    fixed_expenses = st.session_state.get('fixed_expenses', 0.0)
 
     # Calculate annual return required to meet the target
     if initial_investment > 0 and target_amount > 0 and years_to_invest > 0:
