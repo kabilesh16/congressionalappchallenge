@@ -2,154 +2,137 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime
+import plotly.express as px
+import requests  # Importing requests for API calls
+import base64
 import smtplib
+import os
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-# Initialize session state for monthly data if it doesn't exist
-if 'monthly_data' not in st.session_state:
-    st.session_state['monthly_data'] = {}
-
+# Initialize the session state
 if 'transactions' not in st.session_state:
     st.session_state['transactions'] = []
+if 'savings_goals' not in st.session_state:
+    st.session_state['savings_goals'] = []
+if 'debts' not in st.session_state:
+    st.session_state['debts'] = []
 
 st.title("💰 Budget Buddy 💰")
 
-# Sidebar for navigation
-st.sidebar.title("Navigation")
-page = st.sidebar.selectbox("Go to", ["Home", "Monthly Analytics", "Investment Planner", "Financial Reports"])
+# Stock Market Tab
+st.subheader("Stock Market Price Tracker")
+api_key = "NXARU2L1OVTKZ8UU"  # Replace with your Alpha Vantage API key
+ticker_symbol = st.text_input("Enter Stock Ticker Symbol (e.g., AAPL for Apple)")
 
-# Home Page (Default)
-if page == "Home":
-    # Month and Year Selection
-    st.subheader("Monthly Financial Overview")
-    selected_month = st.selectbox("Select Month", [f"{i:02d}" for i in range(1, 13)])
-    selected_year = st.number_input("Select Year", min_value=2000, max_value=2100, value=datetime.now().year)
+if st.button("Get Stock Price"):
+    if ticker_symbol:
+        url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={ticker_symbol}&apikey={api_key}"
+        response = requests.get(url)
+        data = response.json()
 
-    # Input for current funds
-    current_funds = st.number_input("Current Funds", min_value=0.0, step=100.0, format="%.2f")
-
-    # Input for income
-    income = st.number_input("Expected Income for the Month", min_value=0.0, step=100.0, format="%.2f")
-
-    # Input for fixed expenses
-    fixed_expenses = st.number_input("Total Fixed Expenses", min_value=0.0, step=100.0, format="%.2f")
-
-    # Input for discretionary spending categories
-    eating_out_budget = st.number_input("Budget for Eating Out", min_value=0.0, step=10.0, format="%.2f")
-    entertainment_budget = st.number_input("Budget for Entertainment", min_value=0.0, step=10.0, format="%.2f")
-
-    if st.button("Submit Monthly Overview"):
-        # Store monthly data
-        month_year_key = f"{selected_year}-{selected_month}"
-        st.session_state['monthly_data'][month_year_key] = {
-            "Current Funds": current_funds,
-            "Income": income,
-            "Fixed Expenses": fixed_expenses,
-            "Eating Out Budget": eating_out_budget,
-            "Entertainment Budget": entertainment_budget,
-            "Spending": {"Eating Out": 0.0, "Entertainment": 0.0},
-        }
-        st.success(f"Monthly Overview for {month_year_key} saved!")
-
-    # Expense Tracking Section
-    st.subheader("Track Your Spending")
-
-    # Input for expense category
-    category = st.selectbox("Expense Category", ["Eating Out", "Entertainment", "Other"])
-    amount_spent = st.number_input("Amount Spent", min_value=0.0, step=0.01)
-
-    if st.button("Add Expense"):
-        # Update spending based on category
-        month_year_key = f"{selected_year}-{selected_month}"
-        if month_year_key in st.session_state['monthly_data']:
-            st.session_state['monthly_data'][month_year_key]["Spending"][category] += amount_spent
-            st.success(f"Added ${amount_spent:.2f} to {category}.")
-
-            # Check for budget overages
-            if category == "Eating Out" and st.session_state['monthly_data'][month_year_key]["Spending"][category] > eating_out_budget:
-                st.warning(f"Alert: You have exceeded your eating out budget by ${st.session_state['monthly_data'][month_year_key]['Spending'][category] - eating_out_budget:.2f}!")
-            elif category == "Entertainment" and st.session_state['monthly_data'][month_year_key]["Spending"][category] > entertainment_budget:
-                st.warning(f"Alert: You have exceeded your entertainment budget by ${st.session_state['monthly_data'][month_year_key]['Spending'][category] - entertainment_budget:.2f}!")
-
-    # Display Monthly Data
-    st.subheader("Monthly Data Overview")
-    if st.session_state['monthly_data']:
-        df_monthly_data = pd.DataFrame.from_dict(st.session_state['monthly_data'], orient='index')
-        st.dataframe(df_monthly_data)
-    else:
-        st.write("No monthly data available.")
-
-    # Pie Chart for Expense Breakdown
-    st.subheader("Expense Breakdown")
-    # Define current_month_key for pie chart section
-    current_month_key = f"{selected_year}-{selected_month}"
-    if 'Spending' in st.session_state['monthly_data'].get(current_month_key, {}):
-        spending_data = st.session_state['monthly_data'][current_month_key]["Spending"]
-        if sum(spending_data.values()) > 0:
-            fig, ax = plt.subplots()
-            ax.pie(spending_data.values(), labels=spending_data.keys(), autopct='%1.1f%%', startangle=90)
-            ax.axis("equal")
-            st.pyplot(fig)
+        if "Global Quote" in data:
+            stock_data = data["Global Quote"]
+            price = stock_data["05. price"]
+            st.success(f"The current price of {ticker_symbol} is ${price}.")
         else:
-            st.write("No spending data available for this month.")
+            st.error("Invalid ticker symbol or API error. Please check the symbol and try again.")
+    else:
+        st.error("Please enter a ticker symbol.")
 
-# Monthly Analytics Page
-elif page == "Monthly Analytics":
-    st.subheader("Monthly Analytics")
+# Create sidebar for different functionalities
+page = st.sidebar.selectbox("Navigation", ["Budget Planner", "Expenses Tracker", "Investment Planner", "Savings Goals", "Debt Tracker", "Reports", "Resources"])
 
-    # Function to generate analytics
-    def generate_analytics():
-        months = []
-        incomes = []
-        expenses = []
+# Budget Planner Tab
+if page == "Budget Planner":
+    st.subheader("Budget Planner")
 
-        for month_year, data in st.session_state['monthly_data'].items():
-            months.append(month_year)
-            incomes.append(data['Income'])
-            total_expenses = data['Fixed Expenses'] + sum(data['Spending'].values())
-            expenses.append(total_expenses)
+    # Income input
+    st.markdown("### Enter Your Income")
+    salary = st.number_input("Monthly Salary", min_value=0.0, step=100.0, format="%.2f")
+    pay_frequency = st.selectbox("Payment Frequency", ["Monthly", "Bi-Weekly", "Weekly", "Annually"])
 
-        return months, incomes, expenses
+    # Fixed expenses input
+    st.markdown("### Enter Your Fixed Expenses")
+    rent = st.number_input("Rent/Mortgage", min_value=0.0, step=50.0, format="%.2f")
+    utilities = st.number_input("Utilities", min_value=0.0, step=10.0, format="%.2f")
+    groceries = st.number_input("Groceries", min_value=0.0, step=10.0, format="%.2f")
+    other_fixed = st.number_input("Other Fixed Expenses", min_value=0.0, step=10.0, format="%.2f")
 
-    # Generate and plot the bar graph for income and expenses
-    if st.session_state['monthly_data']:
-        months, incomes, expenses = generate_analytics()
+    # Calculate monthly income
+    if pay_frequency == "Weekly":
+        monthly_income = salary * 4
+    elif pay_frequency == "Bi-Weekly":
+        monthly_income = salary * 2
+    elif pay_frequency == "Monthly":
+        monthly_income = salary
+    elif pay_frequency == "Annually":
+        monthly_income = salary / 12
 
+    # Calculate total fixed expenses and discretionary income
+    total_fixed_expenses = rent + utilities + groceries + other_fixed
+    discretionary_income = monthly_income - total_fixed_expenses
+
+    # Display Budget Summary
+    st.markdown("### Budget Summary")
+    st.write(f"**Your Monthly Income:** ${monthly_income:.2f}")
+    st.write(f"**Total Fixed Expenses:** ${total_fixed_expenses:.2f}")
+    st.write(f"**Discretionary Income:** ${discretionary_income:.2f}")
+
+    # Pie chart for budget visualization
+    if total_fixed_expenses > 0 or discretionary_income > 0:
+        budget_data = {"Fixed Expenses": total_fixed_expenses, "Discretionary Income": discretionary_income}
         fig, ax = plt.subplots()
-        bar_width = 0.35
-        index = range(len(months))
-
-        bar1 = ax.bar(index, incomes, bar_width, label='Income')
-        bar2 = ax.bar([i + bar_width for i in index], expenses, bar_width, label='Expenses')
-
-        ax.set_xlabel('Month-Year')
-        ax.set_ylabel('Amount')
-        ax.set_title('Monthly Income and Expenses')
-        ax.set_xticks([i + bar_width / 2 for i in index])
-        ax.set_xticklabels(months)
-        ax.legend()
-
+        ax.pie(budget_data.values(), labels=budget_data.keys(), autopct='%1.1f%%', startangle=90)
+        ax.axis("equal")
         st.pyplot(fig)
     else:
-        st.write("No data available to display.")
+        st.write("Please enter valid income and expense amounts to visualize the budget.")
 
-# Investment Planner Page
+# Expenses Tracker Tab
+elif page == "Expenses Tracker":
+    st.subheader("Expenses Tracker")
+
+    # Function to add transactions
+    def add_transaction(date, category, amount, type):
+        return {"Date": date, "Category": category, "Amount": amount, "Type": type}
+
+    # Sidebar for adding transactions
+    st.sidebar.header("Add Transaction")
+    date = st.sidebar.date_input("Transaction Date", datetime.now())
+    category = st.sidebar.selectbox("Category", ["Food", "Rent", "Utilities", "Entertainment", "Other"])
+    amount = st.sidebar.number_input("Amount", min_value=0.0, step=0.01)
+    transaction_type = st.sidebar.radio("Transaction Type", ["Income", "Expense"])
+
+    if st.sidebar.button("Add Transaction"):
+        new_transaction = add_transaction(date, category, amount, transaction_type)
+        st.session_state["transactions"].append(new_transaction)
+        st.sidebar.success("Transaction added!")
+
+    # Display transactions
+    st.markdown("### Transaction History")
+    if st.session_state["transactions"]:
+        df = pd.DataFrame(st.session_state["transactions"])
+        st.dataframe(df)
+    else:
+        st.write("No transactions yet.")
+
+# Investment Planner Tab
 elif page == "Investment Planner":
     st.subheader("Investment Planner")
 
     # User inputs for investment details
-    target_amount = st.number_input("Target Investment Amount", min_value=0.0, step=100.0, format="%.2f")
     initial_investment = st.number_input("Initial Investment Amount", min_value=0.0, step=100.0, format="%.2f")
+    target_amount = st.number_input("Target Investment Amount", min_value=0.0, step=100.0, format="%.2f")
     years_to_invest = st.number_input("Investment Duration (Years)", min_value=1, step=1)
 
     # Calculate annual return required to meet the target
     if initial_investment > 0 and target_amount > 0 and years_to_invest > 0:
         required_return = ((target_amount / initial_investment) ** (1 / years_to_invest)) - 1
         required_return_percentage = required_return * 100
-
-        # Discretionary Income Calculation
-        discretionary_income = income - fixed_expenses
 
         # Investment strategy based on required return
         if required_return_percentage < 5:
@@ -162,16 +145,65 @@ elif page == "Investment Planner":
         # Display results
         st.write(f"To reach your target of **${target_amount}** in **{years_to_invest} years**, you need an annual return of **{required_return_percentage:.2f}%**.")
         st.write(f"**Suggested Investment Strategy:** {strategy}")
-        st.write(f"Your discretionary income is **${discretionary_income:.2f}**.")
 
         # Visualization of investment growth
         future_values = [initial_investment * (1 + required_return) ** i for i in range(years_to_invest + 1)]
         st.line_chart(future_values)
     else:
-        st.write("Please enter valid amounts and duration for investment.")
+        st.write("Please enter valid amounts and duration.")
 
-# Financial Reports Page
-elif page == "Financial Reports":
+# Savings Goals Tab
+elif page == "Savings Goals":
+    st.subheader("Savings Goals")
+
+    goal_name = st.text_input("Goal Name")
+    goal_amount = st.number_input("Goal Amount", min_value=0.0, step=100.0, format="%.2f")
+    current_amount = st.number_input("Current Amount Saved", min_value=0.0, step=100.0, format="%.2f")
+    goal_date = st.date_input("Target Date", datetime.now())
+
+    if st.button("Add Savings Goal"):
+        new_goal = {"Name": goal_name, "Target Amount": goal_amount, "Current Amount": current_amount, "Target Date": goal_date}
+        st.session_state["savings_goals"].append(new_goal)
+        st.success("Savings goal added!")
+
+    # Display savings goals
+    st.markdown("### Your Savings Goals")
+    if st.session_state["savings_goals"]:
+        df_goals = pd.DataFrame(st.session_state["savings_goals"])
+        st.dataframe(df_goals)
+
+        # Show progress bars
+        for goal in st.session_state['savings_goals']:
+            progress = (goal['Current Amount'] / goal['Target Amount']) * 100 if goal['Target Amount'] > 0 else 0
+            st.progress(progress)
+
+    else:
+        st.write("No savings goals yet.")
+
+# Debt Tracker Tab
+elif page == "Debt Tracker":
+    st.subheader("Debt Tracker")
+
+    debt_name = st.text_input("Debt Name")
+    debt_amount = st.number_input("Total Debt Amount", min_value=0.0, step=100.0, format="%.2f")
+    monthly_payment = st.number_input("Monthly Payment", min_value=0.0, step=50.0, format="%.2f")
+
+    if st.button("Add Debt"):
+        new_debt = {"Name": debt_name, "Total Amount": debt_amount, "Monthly Payment": monthly_payment}
+        st.session_state["debts"].append(new_debt)
+        st.success("Debt added!")
+
+    # Display debts
+    st.markdown("### Your Debts")
+    if st.session_state["debts"]:
+        df_debts = pd.DataFrame(st.session_state["debts"])
+        st.dataframe(df_debts)
+    else:
+        st.write("No debts yet.")
+
+# Reports Tab
+
+elif page == "Reports":
     st.subheader("Financial Reports")
 
     # Example report logic (can be expanded)
@@ -242,6 +274,24 @@ elif page == "Financial Reports":
             direction = "increased" if change > 0 else "decreased"
             report_body += f"In {month}, your expenses {direction} by **${abs(change):.2f}**.\n"
 
+        # Prepare data for bar graph
+        all_months = sorted(set(monthly_income_data.keys()).union(monthly_expense_data.keys()))
+        income_values = [monthly_income_data.get(month, 0) for month in all_months]
+        expense_values = [monthly_expense_data.get(month, 0) for month in all_months]
+
+        # Create a DataFrame for plotting
+        df_report = pd.DataFrame({
+            'Month': all_months,
+            'Income': income_values,
+            'Expense': expense_values
+        })
+
+        # Bar graph for monthly income and expenses
+        st.markdown("### Monthly Income vs Expenses")
+        fig = px.bar(df_report, x='Month', y=['Income', 'Expense'], title='Monthly Income vs Expenses',
+                     labels={'value':'Amount', 'Month':'Month'}, barmode='group')
+        st.plotly_chart(fig)
+
     else:
         st.write("No transactions recorded yet.")
 
@@ -284,3 +334,63 @@ elif page == "Financial Reports":
                 st.error(f"Failed to send email: {result}")
         else:
             st.error("Please fill out all fields and ensure there is a report to send.")
+
+
+# Resources Tab
+elif page == "Resources":
+    st.subheader("Resources")
+    st.write("Links to financial literacy resources and tools will be available here.")
+
+    # List of resources (YouTube videos or tutorials)
+    resources = {
+        "YouTube Videos": [
+            {
+                "title": "The Basics of Investing",
+                "url": "https://www.youtube.com/watch?v=3N5jBThA0fE",
+                "description": "A comprehensive introduction to investing in the stock market."
+            },
+            {
+                "title": "Understanding Credit Scores",
+                "url": "https://www.youtube.com/watch?v=yO1gQgMy8kE",
+                "description": "Learn how credit scores work and how to improve them."
+            },
+            {
+                "title": "Budgeting 101",
+                "url": "https://www.youtube.com/watch?v=EovBWe-RDuc",
+                "description": "Essential tips on how to create and stick to a budget."
+            },
+        ],
+        "Online Courses": [
+            {
+                "title": "Financial Literacy Course by Khan Academy",
+                "url": "https://www.khanacademy.org/college-careers-more/personal-finance",
+                "description": "A free course covering various aspects of personal finance."
+            },
+            {
+                "title": "Investing Basics by Coursera",
+                "url": "https://www.coursera.org/learn/investing-basics",
+                "description": "An introductory course to investing concepts."
+            }
+        ]
+    }
+
+    # Display resources
+    for category, items in resources.items():
+        st.markdown(f"#### {category}")
+        for item in items:
+            st.write(f"- [{item['title']}]({item['url']}) - {item['description']}")
+
+    # Add News API integration
+    news_api_key = "e1f0711db9a34f9fb14ee48b09907dd7"  # Your News API key
+    news_url = f"https://newsapi.org/v2/everything?q=finance&apiKey={news_api_key}"  # Fetching finance-related news
+    news_response = requests.get(news_url)
+    news_data = news_response.json()
+
+    if news_data["status"] == "ok":
+        st.markdown("### Latest Finance News Articles")
+        for article in news_data["articles"]:
+            st.subheader(article["title"])
+            st.write(article["description"])
+            st.write(f"[Read more]({article['url']})")
+    else:
+        st.error("Failed to fetch news articles.")
