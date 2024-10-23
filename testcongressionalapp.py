@@ -319,10 +319,10 @@ elif page == "Reports":
 
     # Email Sending Functionality
     st.markdown("### Send Financial Report via Email")
-    sender_email = st.text_input("Your Email", value="johndoe@gmail.com")
-    sender_password = st.text_input("Your Email Password", type='password')
-    recipient_email = st.text_input("Recipient's Email", value="johndoe@gmail.com")
-    subject = st.text_input("Email Subject", value="Financial Report")
+    sender_email = st.text_input("Your Email", placeholder="example@gmail.com")
+    sender_password = st.text_input("Your Email Password", type='password', placeholder="Enter your email password")
+    recipient_email = st.text_input("Recipient's Email", placeholder="recipient@example.com")
+    subject = st.text_input("Email Subject", placeholder="Subject of your email")
 
     if st.button("Send Email"):
         # Check if all fields are filled and if report_body is defined and not empty
