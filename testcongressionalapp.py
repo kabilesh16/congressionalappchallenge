@@ -319,7 +319,7 @@ elif page == "Reports":
 
     # Email Sending Functionality
     st.markdown("### Send Financial Report via Email")
-    sender_email = st.text_input("Your Email", placeholder="example@gmail.com")
+    sender_email = st.text_input("Your Email", placeholder="sender@example.com")
     sender_password = st.text_input("Your Email Password", type='password', placeholder="Enter your email password")
     recipient_email = st.text_input("Recipient's Email", placeholder="recipient@example.com")
     subject = st.text_input("Email Subject", placeholder="Subject of your email")
