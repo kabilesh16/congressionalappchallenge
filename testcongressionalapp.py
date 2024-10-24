@@ -434,7 +434,7 @@ elif page == "📚 Resources":
 
 elif page == "❓ Help":
     st.title("🔍 Help - Explore Financial Topics")
-    st.write("Welcome to the financial help page! Enter a financial topic below to find definitions, articles, and resources.")
+    st.write("Welcome to the financial help page! Enter a financial topic below to find definitions, articles, resources, and videos.")
 
     # Text input for the user to enter their search query
     query = st.text_input("Search for a financial topic...", placeholder="e.g., stock market, cryptocurrency")
@@ -480,6 +480,27 @@ elif page == "❓ Help":
 
                             # Add a separator line for better organization
                             st.markdown("---")  # Horizontal line for separation
+
+                    # Call YouTube API for related videos
+                    st.header("🎥 Related YouTube Videos")
+                    youtube_api_key = 'AIzaSyAeroON9fDsu6_vZeskqV6fs0N_HXkDJ0s'  # Your YouTube API key
+                    youtube_search_url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&q={query}&key={youtube_api_key}&maxResults=5&type=video"
+                    youtube_response = requests.get(youtube_search_url)
+
+                    if youtube_response.status_code == 200:
+                        youtube_data = youtube_response.json()
+                        video_items = youtube_data.get('items', [])
+                        if video_items:
+                            for item in video_items:
+                                video_title = item['snippet']['title']
+                                video_id = item['id']['videoId']
+                                video_url = f"https://www.youtube.com/watch?v={video_id}"
+                                st.markdown(f"**{video_title}**  \n[Watch Video]({video_url})", unsafe_allow_html=True)
+                        else:
+                            st.write("🚫 No related videos found.")
+                    else:
+                        st.error("⚠️ Error fetching data from YouTube API.")
+
                 else:
                     st.write("🚫 No results found for your query.")
             else:
@@ -539,6 +560,27 @@ elif page == "❓ Help":
                                         )
 
                                 st.markdown("---")  # Horizontal line for separation
+
+                        # Call YouTube API for related videos
+                        st.header("🎥 Related YouTube Videos")
+                        youtube_api_key = 'AIzaSyAeroON9fDsu6_vZeskqV6fs0N_HXkDJ0s'  # Your YouTube API key
+                        youtube_search_url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&q={query}&key={youtube_api_key}&maxResults=5&type=video"
+                        youtube_response = requests.get(youtube_search_url)
+
+                        if youtube_response.status_code == 200:
+                            youtube_data = youtube_response.json()
+                            video_items = youtube_data.get('items', [])
+                            if video_items:
+                                for item in video_items:
+                                    video_title = item['snippet']['title']
+                                    video_id = item['id']['videoId']
+                                    video_url = f"https://www.youtube.com/watch?v={video_id}"
+                                    st.markdown(f"**{video_title}**  \n[Watch Video]({video_url})", unsafe_allow_html=True)
+                            else:
+                                st.write("🚫 No related videos found.")
+                        else:
+                            st.error("⚠️ Error fetching data from YouTube API.")
+
                     else:
                         st.write("🚫 No results found for your query.")
                 else:
