@@ -44,10 +44,10 @@ st.title("💰 Budg3t Buddy 💰")
 #         st.error("Please enter a ticker symbol.")
 
 # Create sidebar for different functionalities
-page = st.sidebar.selectbox("Navigation", ["Budget Planner", "Expenses Tracker", "Investment Planner", "Reports", "Resources"])
+page = st.sidebar.selectbox("Navigation", ["💵 Budget Planner", "📊 Expenses Tracker", "📈 Investment Planner", "📑 Reports", "📚 Resources", "❓ Help"])
 
 # Budget Planner Tab
-if page == "Budget Planner":
+if page == "💵 Budget Planner":
     st.subheader("Budget Planner")
 
     # Income input
@@ -93,7 +93,7 @@ if page == "Budget Planner":
         st.write("Please enter valid income and expense amounts to visualize the budget.")
 
 # Expenses Tracker Tab
-elif page == "Expenses Tracker":
+elif page == "📊 Expenses Tracker":
     st.subheader("Expenses Tracker")
 
     # Function to add transactions
@@ -121,7 +121,7 @@ elif page == "Expenses Tracker":
         st.write("No transactions yet.")
 
 # Investment Planner Tab
-elif page == "Investment Planner":
+elif page == "📈 Investment Planner":
     st.subheader("Investment Planner")
 
     # User inputs for investment details
@@ -153,7 +153,7 @@ elif page == "Investment Planner":
 
         # Fetch stock data from the API
         if ticker_symbol:
-            api_key = "NXARU2L1OVTKZ8UU"
+            api_key = "9HZK65U5W04ZP6P4"
             url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={ticker_symbol}&apikey={api_key}"
 
             try:
@@ -240,7 +240,7 @@ elif page == "Investment Planner":
 
 # Reports Tab
 
-elif page == "Reports":
+elif page == "📑 Reports":
     st.subheader("Financial Reports")
 
     # Example report logic (can be expanded)
@@ -374,7 +374,7 @@ elif page == "Reports":
 
 
 # Resources Tab
-elif page == "Resources":
+elif page == "📚 Resources":
     st.subheader("Resources")
     st.write("Links to financial literacy resources and tools will be available here.")
 
@@ -431,3 +431,119 @@ elif page == "Resources":
             st.write(f"[Read more]({article['url']})")
     else:
         st.error("Failed to fetch news articles.")
+
+elif page == "❓ Help":
+    st.title("🔍 Help - Explore Financial Topics")
+    st.write("Welcome to the financial help page! Enter a financial topic below to find definitions, articles, and resources.")
+
+    # Text input for the user to enter their search query
+    query = st.text_input("Search for a financial topic...", placeholder="e.g., stock market, cryptocurrency")
+
+    # Button to trigger the search
+    if st.button("Search"):
+        if query:
+            # Call the Wikipedia API to fetch definitions and articles
+            search_url = f"https://en.wikipedia.org/w/api.php?action=opensearch&search={query}&limit=10&namespace=0&format=json"
+            response = requests.get(search_url)
+
+            if response.status_code == 200:
+                data = response.json()
+
+                # Extract results
+                titles = data[1]  # Titles of the search results
+                descriptions = data[2]  # Descriptions
+                urls = data[3]  # URLs to the articles
+
+                if titles:
+                    st.header("📝 Search Results")
+                    for title, description, url in zip(titles, descriptions, urls):
+                        # Create a card-like layout for each result
+                        with st.container():
+                            st.markdown(f"### {title}", unsafe_allow_html=True)
+                            st.write(description)  # Plain description without italics
+                            st.markdown(f"[Read more]({url})", unsafe_allow_html=True)
+
+                            # Add an image related to the topic if available
+                            img_search_url = f"https://en.wikipedia.org/w/api.php?action=query&titles={title}&prop=pageimages&format=json"
+                            img_response = requests.get(img_search_url)
+                            if img_response.status_code == 200:
+                                img_data = img_response.json()
+                                page_id = next(iter(img_data['query']['pages']))
+                                if 'thumbnail' in img_data['query']['pages'][page_id]:
+                                    img_url = img_data['query']['pages'][page_id]['thumbnail']['source']
+                                    # Add image with a black outline using HTML
+                                    st.markdown(
+                                        f'<div style="border: 2px solid black; display: inline-block; padding: 5px;">'
+                                        f'<img src="{img_url}" width="150" /></div>',
+                                        unsafe_allow_html=True
+                                    )
+
+                            # Add a separator line for better organization
+                            st.markdown("---")  # Horizontal line for separation
+                else:
+                    st.write("🚫 No results found for your query.")
+            else:
+                st.error("⚠️ Error fetching data from Wikipedia API.")
+        else:
+            st.warning("⚠️ Please enter a topic to search.")
+
+    # Suggested topics section
+    st.sidebar.header("Suggested Topics")
+    suggested_topics = ["Stock Market", "Cryptocurrency", "Inflation", "Interest Rates", "Investment Strategies"]
+
+    # Placeholder to store selected topic
+    selected_topic = st.sidebar.radio("Select a topic:", suggested_topics)
+
+    # Update the text input with the selected topic
+    if selected_topic:
+        st.session_state.query = selected_topic  # Store the selected topic in session state
+        query = st.session_state.query  # Update the query variable
+
+        # Trigger the search automatically
+        if st.button("Search Topic"):
+            if query:
+                # Call the Wikipedia API to fetch definitions and articles
+                search_url = f"https://en.wikipedia.org/w/api.php?action=opensearch&search={query}&limit=10&namespace=0&format=json"
+                response = requests.get(search_url)
+
+                if response.status_code == 200:
+                    data = response.json()
+
+                    # Extract results
+                    titles = data[1]  # Titles of the search results
+                    descriptions = data[2]  # Descriptions
+                    urls = data[3]  # URLs to the articles
+
+                    if titles:
+                        st.header("📝 Search Results")
+                        for title, description, url in zip(titles, descriptions, urls):
+                            # Create a card-like layout for each result
+                            with st.container():
+                                st.markdown(f"### {title}", unsafe_allow_html=True)
+                                st.write(description)  # Plain description without italics
+                                st.markdown(f"[Read more]({url})", unsafe_allow_html=True)
+
+                                # Add an image related to the topic if available
+                                img_search_url = f"https://en.wikipedia.org/w/api.php?action=query&titles={title}&prop=pageimages&format=json"
+                                img_response = requests.get(img_search_url)
+                                if img_response.status_code == 200:
+                                    img_data = img_response.json()
+                                    page_id = next(iter(img_data['query']['pages']))
+                                    if 'thumbnail' in img_data['query']['pages'][page_id]:
+                                        img_url = img_data['query']['pages'][page_id]['thumbnail']['source']
+                                        # Add image with a black outline using HTML
+                                        st.markdown(
+                                            f'<div style="border: 2px solid black; display: inline-block; padding: 5px;">'
+                                            f'<img src="{img_url}" width="150" /></div>',
+                                            unsafe_allow_html=True
+                                        )
+
+                                st.markdown("---")  # Horizontal line for separation
+                    else:
+                        st.write("🚫 No results found for your query.")
+                else:
+                    st.error("⚠️ Error fetching data from Wikipedia API.")
+            else:
+                st.warning("⚠️ Please enter a topic to search.")
+
+
