@@ -128,7 +128,11 @@ elif page == "📈 Investment Planner":
     initial_investment = st.number_input("Initial Investment Amount", min_value=0.0, step=100.0, format="%.2f")
     target_amount = st.number_input("Target Investment Amount", min_value=0.0, step=100.0, format="%.2f")
     years_to_invest = st.number_input("Investment Duration (Years)", min_value=1, step=1)
-    ticker_symbol = st.text_input("Enter Stock Ticker Symbol (e.g., AAPL, TSLA)")
+
+    # Predefined stock categories
+    conservative_stocks = ["JNJ (Johnson & Johnson)", "KO (Coca-Cola)", "PG (Procter & Gamble)", "PFE (Pfizer)", "MCD (McDonald's)"]
+    moderate_stocks = ["AAPL (Apple)", "MSFT (Microsoft)", "GOOGL (Google)", "V (Visa)", "NFLX (Netflix)"]
+    aggressive_stocks = ["TSLA (Tesla)", "NVDA (Nvidia)", "AMZN (Amazon)", "AMD (Advanced Micro Devices)", "SQ (Square)"]
 
     # Calculate annual return required to meet the target
     if initial_investment > 0 and target_amount > 0 and years_to_invest > 0:
@@ -138,10 +142,13 @@ elif page == "📈 Investment Planner":
         # Investment strategy based on required return
         if required_return_percentage < 5:
             strategy = "Conservative"
+            suggested_stocks = conservative_stocks
         elif 5 <= required_return_percentage <= 10:
             strategy = "Moderate"
+            suggested_stocks = moderate_stocks
         else:
             strategy = "Aggressive"
+            suggested_stocks = aggressive_stocks
 
         # Display results
         st.write(f"To reach your target of **${target_amount}** in **{years_to_invest} years**, you need an annual return of **{required_return_percentage:.2f}%**.")
@@ -151,43 +158,13 @@ elif page == "📈 Investment Planner":
         future_values = [initial_investment * (1 + required_return) ** i for i in range(years_to_invest + 1)]
         st.line_chart(future_values)
 
-        # Fetch stock data from the API
-        if ticker_symbol:
-            api_key = "9HZK65U5W04ZP6P4"
-            url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={ticker_symbol}&apikey={api_key}"
-
-            try:
-                response = requests.get(url)
-                data = response.json()
-
-                # Debug: Print the entire response for inspection
-                st.write(data)  # This will help identify issues with the response
-
-                # Check if data is valid
-                if "Global Quote" in data and data["Global Quote"]:
-                    stock_data = data["Global Quote"]
-                    current_price = float(stock_data["05. price"])
-                    price_change_percent = float(stock_data["10. change percent"].replace('%', ''))
-
-                    # Display stock information
-                    st.write(f"**Current Price of {ticker_symbol}:** ${current_price:.2f}")
-                    st.write(f"**Price Change Percentage:** {price_change_percent:.2f}%")
-
-                    # Risk Assessment
-                    if price_change_percent < 0:
-                        risk = "Risky (declining)"
-                    elif price_change_percent <= 5:
-                        risk = "Moderate Risk"
-                    else:
-                        risk = "Low Risk (gaining)"
-
-                    st.write(f"**Risk Assessment for {ticker_symbol}:** {risk}")
-                else:
-                    st.error("Invalid ticker symbol or API response. Please try again.")
-            except Exception as e:
-                st.error(f"Error fetching data: {e}")
+        # Display suggested stocks below the graph
+        st.write("### Suggested Stocks:")
+        for stock in suggested_stocks:
+            st.write(f"- {stock}")
     else:
         st.write("Please enter valid amounts and duration.")
+
 
 # Savings Goals Tab
 # elif page == "Savings Goals":
