@@ -23,25 +23,7 @@ if 'debts' not in st.session_state:
 
 st.title("💰 Budg3t Buddy 💰")
 
-# Stock Market Tab
-# st.subheader("Stock Market Price Tracker")
-# api_key = "NXARU2L1OVTKZ8UU"  # Replace with your Alpha Vantage API key
-# ticker_symbol = st.text_input("Enter Stock Ticker Symbol (e.g., AAPL for Apple)")
 
-# if st.button("Get Stock Price"):
-#     if ticker_symbol:
-#         url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={ticker_symbol}&apikey={api_key}"
-#         response = requests.get(url)
-#         data = response.json()
-
-#         if "Global Quote" in data:
-#             stock_data = data["Global Quote"]
-#             price = stock_data["05. price"]
-#             st.success(f"The current price of {ticker_symbol} is ${price}.")
-#         else:
-#             st.error("Invalid ticker symbol or API error. Please check the symbol and try again.")
-#     else:
-#         st.error("Please enter a ticker symbol.")
 
 # Create sidebar for different functionalities
 page = st.sidebar.selectbox("Navigation", ["Budget Planner", "Expenses Tracker", "Investment Planner", "Reports", "Resources"])
@@ -152,54 +134,7 @@ elif page == "Investment Planner":
     else:
         st.write("Please enter valid amounts and duration.")
 
-# Savings Goals Tab
-# elif page == "Savings Goals":
-#     st.subheader("Savings Goals")
 
-#     goal_name = st.text_input("Goal Name")
-#     goal_amount = st.number_input("Goal Amount", min_value=0.0, step=100.0, format="%.2f")
-#     current_amount = st.number_input("Current Amount Saved", min_value=0.0, step=100.0, format="%.2f")
-#     goal_date = st.date_input("Target Date", datetime.now())
-
-#     if st.button("Add Savings Goal"):
-#         new_goal = {"Name": goal_name, "Target Amount": goal_amount, "Current Amount": current_amount, "Target Date": goal_date}
-#         st.session_state["savings_goals"].append(new_goal)
-#         st.success("Savings goal added!")
-
-#     # Display savings goals
-#     st.markdown("### Your Savings Goals")
-#     if st.session_state["savings_goals"]:
-#         df_goals = pd.DataFrame(st.session_state["savings_goals"])
-#         st.dataframe(df_goals)
-
-#         # Show progress bars
-#         for goal in st.session_state['savings_goals']:
-#             progress = (goal['Current Amount'] / goal['Target Amount']) * 100 if goal['Target Amount'] > 0 else 0
-#             st.progress(progress)
-
-#     else:
-#         st.write("No savings goals yet.")
-
-# Debt Tracker Tab
-# elif page == "Debt Tracker":
-#     st.subheader("Debt Tracker")
-
-#     debt_name = st.text_input("Debt Name")
-#     debt_amount = st.number_input("Total Debt Amount", min_value=0.0, step=100.0, format="%.2f")
-#     monthly_payment = st.number_input("Monthly Payment", min_value=0.0, step=50.0, format="%.2f")
-
-#     if st.button("Add Debt"):
-#         new_debt = {"Name": debt_name, "Total Amount": debt_amount, "Monthly Payment": monthly_payment}
-#         st.session_state["debts"].append(new_debt)
-#         st.success("Debt added!")
-
-#     # Display debts
-#     st.markdown("### Your Debts")
-#     if st.session_state["debts"]:
-#         df_debts = pd.DataFrame(st.session_state["debts"])
-#         st.dataframe(df_debts)
-#     else:
-#         st.write("No debts yet.")
 
 # Reports Tab
 
