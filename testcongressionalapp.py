@@ -331,5 +331,4 @@ elif page == "Resources":
     else:
         st.error("Failed to fetch news articles.")
 
-#link to yt video: https://www.youtube.com/watch?v=Wf6KHBkxePY
 
