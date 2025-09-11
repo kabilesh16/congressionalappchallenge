@@ -9,16 +9,12 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-# ---------------------------
 # Initialize session state
-# ---------------------------
 for key in ["transactions", "savings_goals", "debts"]:
     if key not in st.session_state:
         st.session_state[key] = []
 
-# ---------------------------
 # Helper functions
-# ---------------------------
 def calculate_monthly_income(salary, frequency):
     return {"Weekly": salary * 4, "Bi-Weekly": salary * 2,
             "Monthly": salary, "Annually": salary / 12}.get(frequency, salary)
@@ -53,15 +49,12 @@ def add_transaction(date, category, amount, type_):
         "Type": type_
     })
 
-# ---------------------------
+
 # App Title and Navigation
-# ---------------------------
 st.title("💰 Budg3t Buddy 💰")
 page = st.sidebar.selectbox("Navigation", ["Budget Planner", "Expenses Tracker", "Investment Planner", "Reports", "Resources"])
 
-# ---------------------------
 # Budget Planner
-# ---------------------------
 if page == "Budget Planner":
     st.subheader("Budget Planner")
 
@@ -93,9 +86,7 @@ if page == "Budget Planner":
     else:
         st.write("Please enter valid income and expenses to visualize the budget.")
 
-# ---------------------------
 # Expenses Tracker
-# ---------------------------
 elif page == "Expenses Tracker":
     st.subheader("Expenses Tracker")
 
@@ -116,9 +107,7 @@ elif page == "Expenses Tracker":
     else:
         st.write("No transactions yet.")
 
-# ---------------------------
 # Investment Planner
-# ---------------------------
 elif page == "Investment Planner":
     st.subheader("Investment Planner")
 
@@ -139,18 +128,14 @@ elif page == "Investment Planner":
     else:
         st.write("Please enter valid amounts and duration.")
 
-# ---------------------------
+
 # Reports
-# ---------------------------
 elif page == "Reports":
     st.subheader("Financial Reports")
 
     if st.session_state.get('transactions'):
         df = pd.DataFrame(st.session_state["transactions"])
 
-        # ---------------------------
-        # Fix for AttributeError: .dt accessor
-        # ---------------------------
         df['Date'] = pd.to_datetime(df['Date'])
         df['Month'] = df['Date'].dt.to_period('M')
 
@@ -185,9 +170,8 @@ elif page == "Reports":
     else:
         st.write("No transactions recorded yet.")
 
-# ---------------------------
+
 # Resources
-# ---------------------------
 elif page == "Resources":
     st.subheader("Resources")
 
