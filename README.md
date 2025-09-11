@@ -16,3 +16,5 @@ Features:
   
  Submitted to Congressional App Challenge and placed 3rd in GA - 06
  Youtube video link at the top of testcongressionalapp.py
+
+Note: For sending the email, currently the admin needs to give their own email and password to send the email from, the user can use their own email and password and send it to themselves.
